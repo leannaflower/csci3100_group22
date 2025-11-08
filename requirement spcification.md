@@ -119,8 +119,7 @@ actor "Project Manager" as PM
 actor "Project Member" as Member
 actor "Guest" as Guest
 
-rectangle "Kanban Project Management System" as System 
-{
+rectangle "Kanban Project Management System" as System {
   usecase "Register Account" as UC_Register
   usecase "Login/Logout" as UC_Login
   usecase "Enter/Verify License" as UC_License
@@ -233,4 +232,94 @@ end
 @enduml
 ```
 ## Components diagram
-  
+```plantuml
+@startuml
+title Kanban-Based Web System - Component Diagram
+
+actor "System Administrator" as Admin
+actor "Project Administrator" as PAdmin
+actor "Project Member" as Member
+actor "Guest (Read-Only)" as Guest
+
+rectangle "Client" as Client {
+  [Web Frontend] <<component>>
+}
+
+package "Backend Services" as Backend {
+
+  [Auth Service] <<component>>
+  [License Service] <<component>>
+  [User Management Service] <<component>>
+
+  [Project Service] <<component>>
+  [Board Service] <<component>>
+  [Task Service] <<component>>
+
+  [Reporting Service] <<component>>
+
+  [Audit Service] <<component>>
+  [Notification Service] <<component>>
+  [File / Export Service] <<component>>
+}
+
+database "MySQL Database" as DB
+cloud "Object Storage\n(Attachments / Exports)" as FS
+cloud "SMTP Server" as SMTP
+
+' Actors to client
+Admin --> Client
+PAdmin --> Client
+Member --> Client
+Guest --> Client
+
+' Client to frontend
+Client --> [Web Frontend]
+
+' Frontend to core services
+[Web Frontend] --> [Auth Service] : Login / Logout / Register
+[Web Frontend] --> [License Service] : License validation / status
+[Web Frontend] --> [User Management Service] : Profiles / roles
+
+[Web Frontend] --> [Project Service] : Manage projects
+[Web Frontend] --> [Board Service] : Configure boards / columns
+[Web Frontend] --> [Task Service] : CRUD tasks / drag-and-drop
+
+[Web Frontend] --> [Reporting Service] : Charts / metrics
+[Web Frontend] --> [File / Export Service] : Export data / download
+[Web Frontend] --> [Audit Service] : View logs (admin only)
+
+' Service collaborations (logical dependencies)
+[Project Service] --> [User Management Service]
+[Board Service] --> [Project Service]
+[Task Service] --> [Board Service]
+[Task Service] --> [User Management Service]
+
+[Task Service] --> [Audit Service]
+[Project Service] --> [Audit Service]
+[License Service] --> [Audit Service]
+
+[Task Service] --> [Notification Service]
+[Project Service] --> [Notification Service]
+
+[Reporting Service] --> [Task Service]
+[Reporting Service] --> [Board Service]
+
+[License Service] --> [User Management Service]
+
+' Persistence and external systems
+[Auth Service] --> DB
+[License Service] --> DB
+[User Management Service] --> DB
+[Project Service] --> DB
+[Board Service] --> DB
+[Task Service] --> DB
+[Reporting Service] --> DB
+[Audit Service] --> DB
+[Notification Service] --> DB
+[File / Export Service] --> DB
+
+[File / Export Service] --> FS
+[Notification Service] --> SMTP
+
+@enduml
+```
