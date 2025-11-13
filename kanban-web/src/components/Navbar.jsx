@@ -29,6 +29,10 @@ export default function Navbar() {
                     </>
                 ) : (
                     <>
+                        <Link to="/dev-board" className="navbar-link">
+                            Board (DEV MODE)
+                        </Link>
+
                         <Link to="/login" className="navbar-link">
                             Login
                         </Link>

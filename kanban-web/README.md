@@ -1,70 +1,133 @@
-# Getting Started with Create React App
+# Task Management Web Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, responsive web application for managing tasks with full CRUD (Create, Read, Update, Delete) operations. Built with React.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- ✅ **Create Tasks**: Add new tasks with title and optional description
+- ✅ **Read Tasks**: View all tasks organized by active and completed
+- ✅ **Update Tasks**: Edit existing tasks
+- ✅ **Delete Tasks**: Remove tasks you no longer need
+- ✅ **Mark Complete**: Toggle task completion status
+- ✅ **Persistent Storage**: Tasks are saved to browser localStorage
+- ✅ **Responsive Design**: Works on desktop, tablet, and mobile devices
+- ✅ **Modern UI**: Clean, intuitive interface with smooth animations
 
-### `npm start`
+## Prerequisites
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Node.js (version 14 or higher)
+- npm or yarn
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Installation
 
-### `npm test`
+1. Clone or navigate to the project directory:
+```bash
+cd CSCI3100Project2
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+2. Install dependencies:
+```bash
+npm install
+```
 
-### `npm run build`
+## Running the Application
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Start the development server:
+```bash
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+The application will open in your browser at `http://localhost:3000`.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Building for Production
 
-### `npm run eject`
+To create a production build:
+```bash
+npm run build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The optimized build will be in the `build` folder.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Project Structure
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```
+├── csci3100_group22
+│   ├── kanban-web
+│   │   ├── public
+│   │   │   └── index.html
+│   │   ├── documents
+│   │   │   ├── BACKEND_API_DOCUMENTATION.md
+│   │   │   ├── BACKEND_QUICK_REFERENCE.md
+│   │   │   ├── requirement spcification.md
+│   │   │   └── Design And Implementation Docume....md
+│   │   ├── src
+│   │   │   ├── api
+│   │   │   │   ├── api.js.example
+│   │   │   │   └── authClient.js
+│   │   │   ├── components
+│   │   │   │   ├── Navbar.jsx
+│   │   │   │   ├── TaskForm.css
+│   │   │   │   ├── TaskForm.js
+│   │   │   │   ├── TaskItem.css
+│   │   │   │   ├── TaskItem.js
+│   │   │   │   ├── TaskList.css
+│   │   │   │   └── TaskList.js
+│   │   │   ├── context
+│   │   │   │   └── AuthContext.jsx
+│   │   │   ├── pages
+│   │   │   │   ├── BoardsPage.jsx
+│   │   │   │   ├── LoginPage.jsx
+│   │   │   │   └── RegisterPage.jsx
+│   │   │   ├── App.css
+│   │   │   ├── App.js
+│   │   │   ├── App.jsx
+│   │   │   ├── index.css
+│   │   │   ├── index.js
+│   │   │   └── main.jsx
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   └── README.md
+│   └── PlantUML Diagrams
+│       ├── Components diagram.png
+│       ├── Sequence Diagram 1- Login and License Verification.png
+│       ├── Sequence Diagram 2- Drag Task to New Column.png
+│       └── Use case diagram.png
+└── project.pdf
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Usage
 
-## Learn More
+1. **Adding a Task**: 
+   - Enter a task title (required) and optional description
+   - Click "Add Task" button
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+2. **Completing a Task**:
+   - Click the checkbox next to a task to mark it as complete
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+3. **Editing a Task**:
+   - Click the edit button (✏️) on any task
+   - Modify the title or description
+   - Click "Update Task" to save changes or "Cancel" to discard
 
-### Code Splitting
+4. **Deleting a Task**:
+   - Click the delete button (🗑️) on any task
+   - The task will be permanently removed
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Technical Details
 
-### Analyzing the Bundle Size
+- **Framework**: React 18.2.0
+- **State Management**: React Hooks (useState, useEffect)
+- **Storage**: Browser localStorage for persistence
+- **Styling**: CSS with modern design patterns
+- **Responsive**: Mobile-first approach with media queries
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Browser Support
 
-### Making a Progressive Web App
+- Chrome (last 5 years)
+- Firefox (last 5 years)
+- Safari (last 5 years)
+- Edge (last 5 years)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## License
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is created for educational purposes as part of CSCI3100 Project 2.
