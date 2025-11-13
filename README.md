@@ -106,4 +106,3 @@ CSCI3100Project2/
 ## License
 
 This project is created for educational purposes as part of CSCI3100 Project 2.
-
