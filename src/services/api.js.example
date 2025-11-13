@@ -1,0 +1,119 @@
+/**
+ * API Service Example
+ * 
+ * This is an example of how to integrate the frontend with the backend API.
+ * Copy this file to src/services/api.js and update the API_BASE_URL.
+ * Then update App.js to use this service instead of localStorage.
+ */
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api/v1';
+
+class ApiService {
+  /**
+   * Generic request method
+   * @param {string} endpoint - API endpoint (e.g., '/tasks')
+   * @param {object} options - Fetch options (method, body, headers, etc.)
+   * @returns {Promise} Parsed JSON response
+   */
+  async request(endpoint, options = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    // Convert body object to JSON string
+    if (config.body && typeof config.body === 'object') {
+      config.body = JSON.stringify(config.body);
+    }
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || `Request failed with status ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all tasks
+   * @returns {Promise<Array>} Array of task objects
+   */
+  async getTasks() {
+    const response = await this.request('/tasks');
+    return response.data || [];
+  }
+
+  /**
+   * Get a single task by ID
+   * @param {string|number} id - Task ID
+   * @returns {Promise<Object>} Task object
+   */
+  async getTask(id) {
+    const response = await this.request(`/tasks/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Create a new task
+   * @param {Object} taskData - Task data {title, description}
+   * @returns {Promise<Object>} Created task object
+   */
+  async createTask(taskData) {
+    const response = await this.request('/tasks', {
+      method: 'POST',
+      body: taskData,
+    });
+    return response.data;
+  }
+
+  /**
+   * Update an existing task
+   * @param {string|number} id - Task ID
+   * @param {Object} taskData - Updated task data {title?, description?}
+   * @returns {Promise<Object>} Updated task object
+   */
+  async updateTask(id, taskData) {
+    const response = await this.request(`/tasks/${id}`, {
+      method: 'PATCH',
+      body: taskData,
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete a task
+   * @param {string|number} id - Task ID
+   * @returns {Promise<void>}
+   */
+  async deleteTask(id) {
+    await this.request(`/tasks/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Toggle task completion status
+   * @param {string|number} id - Task ID
+   * @returns {Promise<Object>} Updated task object
+   */
+  async toggleTask(id) {
+    const response = await this.request(`/tasks/${id}/toggle`, {
+      method: 'PATCH',
+    });
+    return response.data;
+  }
+}
+
+export default new ApiService();
+
