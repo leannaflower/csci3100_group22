@@ -1,0 +1,184 @@
+.kanban-board {
+    padding: 20px;
+}
+
+.kanban-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.kanban-columns {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.kanban-column-title {
+    margin-bottom: 12px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.kanban-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kanban-add-task input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+}
+
+.kanban-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: grab;
+    transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.kanban-card-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kanban-card-body {
+    flex: 1;
+}
+
+.kanban-card-title {
+    font-size: 14px;
+    color: #111827;
+}
+
+.kanban-card-delete {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Completed state */
+.kanban-card-completed .kanban-card-title {
+    text-decoration: line-through;
+    color: #6b7280;
+}
+
+/* Dragging visual */
+.kanban-card-dragging {
+    opacity: 0.6;
+    transform: scale(1.03);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.25);
+    cursor: grabbing;
+}
+
+.kanban-column {
+    flex: 1;
+    background: #f3f4f6;
+    padding: 16px;
+    border-radius: 12px;
+    min-height: 400px;
+    position: relative;
+    transition: background-color 0.15s ease, border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+/* When a dragged card is hovering over the column */
+.kanban-column-drag-over {
+    background-color: #e0f2fe;
+    border: 2px dashed #0284c7;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Wrap actions on the right side of the card */
+.kanban-card-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/* Edit button style (simple, neutral) */
+.kanban-card-edit {
+    border: 1px solid #9ca3af;
+    background-color: #f3f4f6;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* Edit mode: card looks like a small form */
+.kanban-card-editing {
+    background-color: #f9fafb;
+    border-style: dashed;
+}
+
+.kanban-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.kanban-edit-input {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+}
+
+.kanban-edit-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.kanban-edit-save,
+.kanban-edit-cancel {
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #d1d5db;
+}
+
+.kanban-edit-save {
+    background-color: #111827;
+    color: #ffffff;
+}
+
+.kanban-edit-cancel {
+    background-color: #f3f4f6;
+}
+
+/* Checkbox and actions hidden by default, only visible on hover */
+.kanban-card-checkbox,
+.kanban-card-actions {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(2px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Checkbox style */
+
+.kanban-card-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+}
+
+/* Show controls on hover */
+.kanban-card:hover .kanban-card-checkbox,
+.kanban-card:hover .kanban-card-actions {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}

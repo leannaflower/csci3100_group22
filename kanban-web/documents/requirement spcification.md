@@ -28,7 +28,7 @@ Project Administrators: Create projects/kanban boards, configure workflows/WIP l
 Project Members: Create/update tasks, collaborate via comments, view reports, and perform daily operations.
 Guests (Read-Only): Access kanban boards and reports in a limited mode.
 ### User Personas
-User A is a project administrator.He plans weekly work, sets WIP limits, monitors CFD to identify bottlenecks, and invites team members to participate.  
+User A is a project administrator. He plans weekly work, sets WIP limits, monitors CFD to identify bottlenecks, and invites team members to participate.  
 User B is a development member. He checks personal tasks daily, updates task status via drag-and-drop, mentions teammates in comments, and responds promptly to notifications.
 ### Scenarios
 Login → View personal kanban boards → Handle upcoming tasks → Update task status via drag-and-drop → Collaborate via comments → View reports  → Logout

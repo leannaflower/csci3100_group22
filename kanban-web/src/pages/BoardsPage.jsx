@@ -1,103 +1,112 @@
-// from Yanice's file App.js for the Form
+// BoardsPage.jsx — Main Kanban board page with editing
 
 import React, { useState, useEffect } from "react";
-import TaskList from "../components/TaskList";
-import TaskForm from "../components/TaskForm";
+import KanbanColumn from "../components/KanbanColumn";
+import "../components/Kanban.css";
 
 export default function BoardsPage() {
+    // "tasks" is the full list of all tasks on the board
     const [tasks, setTasks] = useState([]);
-    const [editingTask, setEditingTask] = useState(null);
 
-    // Load tasks from localStorage
+    // The three columns that will appear on the board
+    const columns = ["To Do", "Doing", "Done"];
+
+    // On first load, try to read any saved tasks from localStorage
     useEffect(() => {
-        const savedTasks = localStorage.getItem("tasks");
-        if (savedTasks) {
-            setTasks(JSON.parse(savedTasks));
+        const saved = localStorage.getItem("kanbanTasks");
+        if (saved) {
+            setTasks(JSON.parse(saved));
         }
     }, []);
 
-    // Save tasks to localStorage whenever they change
+    // Whenever "tasks" changes, save the latest version to localStorage
     useEffect(() => {
-        localStorage.setItem("tasks", JSON.stringify(tasks));
+        localStorage.setItem("kanbanTasks", JSON.stringify(tasks));
     }, [tasks]);
 
-    function addTask(_taskIdIgnored, taskData) {
+    // Add a new task into a specific column
+    function addTask(columnName, title) {
+        const now = new Date().toISOString();
         const newTask = {
             id: Date.now().toString(),
-            title: taskData.title,
-            description: taskData.description || "",
-            completed: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            title,
+            column: columnName,
+            completed: columnName === "Done",
+            createdAt: now,
+            updatedAt: now
         };
-        setTasks((prev) => [...prev, newTask]);
+        setTasks(prev => [...prev, newTask]);
     }
 
-    function updateTask(taskId, taskData) {
-        setTasks((prev) =>
-            prev.map((task) =>
-                task.id === taskId
+
+    // Move an existing task to a different column (drag-and-drop)
+    function moveTask(taskId, newColumn) {
+        setTasks(prev =>
+            prev.map(t =>
+                t.id === taskId
                     ? {
-                        ...task,
-                        title: taskData.title,
-                        description: taskData.description || "",
-                        updatedAt: new Date().toISOString(),
+                        ...t,
+                        column: newColumn,
+                        completed: newColumn === "Done",    // completed is true only in Done column
+                        updatedAt: new Date().toISOString()
                     }
-                    : task
-            )
-        );
-        setEditingTask(null);
-    }
-
-    function deleteTask(taskId) {
-        setTasks((prev) => prev.filter((task) => task.id !== taskId));
-        if (editingTask?.id === taskId) {
-            setEditingTask(null);
-        }
-    }
-
-    function toggleComplete(taskId) {
-        setTasks((prev) =>
-            prev.map((task) =>
-                task.id === taskId
-                    ? {
-                        ...task,
-                        completed: !task.completed,
-                        updatedAt: new Date().toISOString(),
-                    }
-                    : task
+                    : t
             )
         );
     }
 
-    function startEdit(task) {
-        setEditingTask(task);
+
+    // Edit/update an existing task (for now, mainly the title and updateAt date)
+    function updateTask(taskId, updates) {
+        setTasks(prev =>
+            prev.map(t =>
+                t.id === taskId
+                    ? { ...t, ...updates, updatedAt: new Date().toISOString() }
+                    : t
+            )
+        );
     }
 
-    function cancelEdit() {
-        setEditingTask(null);
+    function toggleTaskComplete(taskId) {
+        setTasks(prev =>
+            prev.map(t => {
+                if (t.id !== taskId) return t;
+
+                const inDone = t.column === "Done";
+                const newColumn = inDone ? "To Do" : "Done";    // if already in Done, send back to To Do
+
+                return {
+                    ...t,
+                    column: newColumn,
+                    completed: newColumn === "Done",
+                    updatedAt: new Date().toISOString()
+                };
+            })
+        );
+    }
+
+    // Permanently remove a task from the board
+    function deleteTask(id) {
+        setTasks(prev => prev.filter(t => t.id !== id));
     }
 
     return (
-        <div className="App">
-            <div className="container">
-                <header className="app-header">
-                    <h1>Task Management</h1>
-                    <p className="subtitle">Organize your work and stay productive</p>
-                </header>
+        <div className="kanban-board">
+            <h1 className="kanban-title">My Kanban Board</h1>
 
-                <TaskForm
-                    onSubmit={editingTask ? updateTask : addTask}
-                    editingTask={editingTask}
-                    onCancel={cancelEdit}
-                />
-
-                <TaskList
-                    tasks={tasks}
-                    onDelete={deleteTask}
-                    onToggleComplete={toggleComplete}
-                    onEdit={startEdit}
-                />
+            <div className="kanban-columns">
+                {columns.map(col => (
+                    <KanbanColumn
+                        key={col}
+                        columnName={col}
+                        tasks={tasks.filter(t => t.column === col)}
+                        addTask={addTask}
+                        moveTask={moveTask}
+                        updateTask={updateTask}
+                        toggleTaskComplete={toggleTaskComplete}
+                        deleteTask={deleteTask}
+                    />
+                ))}
             </div>
         </div>
     );
