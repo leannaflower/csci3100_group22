@@ -22,8 +22,9 @@ export default function Navbar() {
             <div className="navbar-right">
                 {user ? (
                     <>
-                        <span className="navbar-username">{user.displayName}</span>
-                        <button onClick={handleLogout} className="navbar-button">
+                        <span className="navbar-username">
+                            {user.displayName || user.name || user.email}
+                        </span>                        <button onClick={handleLogout} className="navbar-button">
                             Logout
                         </button>
                     </>

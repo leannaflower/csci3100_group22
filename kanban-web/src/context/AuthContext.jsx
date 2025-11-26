@@ -1,42 +1,140 @@
-import React, { createContext, useContext, useState } from "react";
+// src/context/AuthContext.jsx
 
-// This is our auth context—it holds onto user info and tokens across the whole app
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
+import {
+    fetchCurrentUser,
+    refreshToken as apiRefreshToken,
+} from "../api/authClient";
+
 const AuthContext = createContext(null);
 
-// This component wraps around our app and gives all its children access to auth state.
-// Wrap our app with this, and any child component can grab user info and login/logout functions.
 export function AuthProvider({ children }) {
-    // Keep track of who's logged in
     const [user, setUser] = useState(null);
-    // Keep track of their access token (needed to talk to the backend)
-    const [accessToken, setAccessToken] = useState(null);
+    const [accessToken, setAccessToken] = useState(
+        () => localStorage.getItem("accessToken") || null
+    );
+    const [refreshToken, setRefreshToken] = useState(
+        () => localStorage.getItem("refreshToken") || null
+    );
+    const [loadingUser, setLoadingUser] = useState(false);
 
-    // Call this when login/signup is successful
-    // It stores the user info and token so the whole app knows they're logged in
-    function handleAuthSuccess(payload) {   // payload should look like: { user: { id, name, email, ... }, accessToken: "token_string" }
-        setUser(payload.user);
-        setAccessToken(payload.accessToken);
+    // Load current user if we already have a token (page refresh)
+    useEffect(() => {
+        const loadUser = async () => {
+            if (!accessToken || user) return;
+
+            setLoadingUser(true);
+            try {
+                const me = await fetchCurrentUser(accessToken);
+                setUser({
+                    id: me.id,
+                    email: me.username,
+                    displayName: me.username, // backend only has username now
+                    status: me.status,
+                });
+            } catch (err) {
+                console.error("Failed to fetch current user:", err);
+                setUser(null);
+                setAccessToken(null);
+                setRefreshToken(null);
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+            } finally {
+                setLoadingUser(false);
+            }
+        };
+
+        loadUser();
+    }, [accessToken, user]);
+
+    // Called after login or register
+    async function handleAuthSuccess(tokenPayload) {
+        const access =
+            tokenPayload.access_token ||
+            tokenPayload.accessToken ||
+            null;
+        const refresh =
+            tokenPayload.refresh_token ||
+            tokenPayload.refreshToken ||
+            null;
+
+        if (!access) {
+            console.error("handleAuthSuccess called without access token", tokenPayload);
+            return;
+        }
+
+        setAccessToken(access);
+        localStorage.setItem("accessToken", access);
+
+        if (refresh) {
+            setRefreshToken(refresh);
+            localStorage.setItem("refreshToken", refresh);
+        }
+
+        // Get user info from /users/me
+        try {
+            setLoadingUser(true);
+            const me = await fetchCurrentUser(access);
+            setUser({
+                id: me.id,
+                email: me.username,
+                displayName: me.username,
+                status: me.status,
+            });
+        } catch (err) {
+            console.error("Failed to fetch user after auth:", err);
+            setUser(null);
+        } finally {
+            setLoadingUser(false);
+        }
     }
 
-    // Call this when the user logs out
-    // It clears everything so they're no longer logged in
+    async function refreshSession() {
+        if (!refreshToken) return;
+
+        try {
+            const tokens = await apiRefreshToken(refreshToken);
+            await handleAuthSuccess(tokens);
+        } catch (err) {
+            console.error("Failed to refresh session:", err);
+            logout();
+        }
+    }
+
     function logout() {
         setUser(null);
         setAccessToken(null);
+        setRefreshToken(null);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
     }
 
-    // Share the auth state and functions with all child components
     return (
-        <AuthContext.Provider value={{ user, accessToken, handleAuthSuccess, logout }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                accessToken,
+                refreshToken,
+                loadingUser,
+                handleAuthSuccess,
+                refreshSession,
+                logout,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
 }
 
-// Use this hook in any component that needs auth info (user, token, etc.)
-// It grabs the stuff from AuthContext and gives it to you—just make sure you're inside AuthProvider!
 export function useAuth() {
     const ctx = useContext(AuthContext);
-    if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+    if (!ctx) {
+        throw new Error("useAuth must be used inside AuthProvider");
+    }
     return ctx;
 }

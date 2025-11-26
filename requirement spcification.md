@@ -17,9 +17,9 @@ GPT-5 (For document frame and translation from Chinese)
 ### Problem Statement and Motivation
 Teams face challenges such as unclear task assignment, excessive WIP, and invisible progress during course projects. The  system addresses these issues through "work visualization + WIP limits + data-driven reports" to improve collaboration  efficiency, delivery predictability, and reduce communication costs.  
 ### Success Metrics
-1. **Onboarding**: New users take ≤10 minutes from registration to successfully creating their first kanban board and adding a task.  
-2. **Usability**: Success rate of critical path tasks ≥ 98%.  
-3. **Stability**: Error rate < 0.5%; end-to-end pass rate for key use cases ≥ 95%.  
+1.**Onboarding**: New users take ≤10 minutes from registration to successfully creating their first kanban board and adding a task.  
+2.**Usability**: Success rate of critical path tasks ≥ 98%.  
+3.**Stability**: Error rate < 0.5%; end-to-end pass rate for key use cases ≥ 95%.  
 ---
 ## Stakeholders and User Personas  
 ### Stakeholder List
@@ -28,7 +28,7 @@ Project Administrators: Create projects/kanban boards, configure workflows/WIP l
 Project Members: Create/update tasks, collaborate via comments, view reports, and perform daily operations.
 Guests (Read-Only): Access kanban boards and reports in a limited mode.
 ### User Personas
-User A is a project administrator. He plans weekly work, sets WIP limits, monitors CFD to identify bottlenecks, and invites team members to participate.  
+User A is a project administrator.He plans weekly work, sets WIP limits, monitors CFD to identify bottlenecks, and invites team members to participate.  
 User B is a development member. He checks personal tasks daily, updates task status via drag-and-drop, mentions teammates in comments, and responds promptly to notifications.
 ### Scenarios
 Login → View personal kanban boards → Handle upcoming tasks → Update task status via drag-and-drop → Collaborate via comments → View reports  → Logout
@@ -54,10 +54,10 @@ System Administrators, Project Administrators, Members, Guests
 - The email gateway is provided by an external SMTP service; the system only sends email requests and is not responsible for delivery rates or bounce handling.
 - Advanced security features are out of scope.
 #### Context Diagram (Text Description)
-- Users access the Web UI via browsers over HTTPS; the Web UI calls the backend REST API.
-- The backend accesses the database to store user, project, task, license, and audit data; it uses object storage to save attachments and exported files.
-- The backend optionally connects to SMTP for email delivery.
-- Administrators export audit logs and data backups via the admin interface.
+Users access the Web UI via browsers over HTTPS; the Web UI calls the backend REST API.
+The backend accesses the database to store user, project, task, license, and audit data; it uses object storage to save attachments and exported files.
+The backend optionally connects to SMTP for email delivery.
+Administrators export audit logs and data backups via the admin interface.
 ---
 ## Functional Requirement  
 ### Category 1: Login and Security

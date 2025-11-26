@@ -15,14 +15,27 @@ export default function RegisterPage() {
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
+
         try {
-            const data = await registerUser({ email, password, displayName });
-            handleAuthSuccess(data);
+            const tokens = await registerUser({
+                email,
+                password,
+            });
+
+            // You can still keep displayName in localStorage if you want later
+            if (displayName) {
+                localStorage.setItem("userDisplayName", displayName);
+            }
+
+            await handleAuthSuccess(tokens);
+
             navigate("/boards");
         } catch (err) {
-            setError(err.message);
+            console.error("Register failed:", err);
+            setError(err.message || String(err));
         }
     }
+
 
     return (
         <div className="auth-page">
@@ -32,18 +45,18 @@ export default function RegisterPage() {
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <label className="auth-label">
-                        Display name
+                        Display name (optional)
                         <input
                             type="text"
                             className="auth-input"
                             value={displayName}
                             onChange={e => setDisplayName(e.target.value)}
-                            required
+                            placeholder="How you want to be called"
                         />
                     </label>
 
                     <label className="auth-label">
-                        Email
+                        Email *
                         <input
                             type="email"
                             className="auth-input"
@@ -54,7 +67,7 @@ export default function RegisterPage() {
                     </label>
 
                     <label className="auth-label">
-                        Password
+                        Password *
                         <input
                             type="password"
                             className="auth-input"

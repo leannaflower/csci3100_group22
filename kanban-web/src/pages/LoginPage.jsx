@@ -12,14 +12,45 @@ export default function LoginPage() {
     const [error, setError] = useState("");
 
     async function handleSubmit(e) {
+        // e.preventDefault();
+        // setError("");
+        // try {
+        //     const data = await loginUser({ email, password });
+
+        //     // Optional: keep token for refresh
+        //     if (data.access_token) {
+        //         localStorage.setItem("token", data.access_token);
+        //     }
+
+        //     // Try to recover a display name from localStorage (from registration)
+        //     const storedName = localStorage.getItem("userDisplayName");
+
+        //     // Build a payload that AuthContext knows how to read
+        //     const payload = {
+        //         ...data,             // access_token, token_type, etc.
+        //         email,               // we know what the user typed
+        //         displayName: storedName || null,
+        //     };
+
+        //     handleAuthSuccess(payload);
+        //     navigate("/boards");
+        // } catch (err) {
+        //     setError(err.message);
+        // }
+
         e.preventDefault();
         setError("");
+
         try {
-            const data = await loginUser({ email, password });
-            handleAuthSuccess(data);
+            const tokens = await loginUser({ email, password });
+            // tokens has access_token and refresh_token
+
+            await handleAuthSuccess(tokens);  // will set user and tokens, call /users/me
+
             navigate("/boards");
         } catch (err) {
-            setError(err.message);
+            console.error("Login failed:", err);
+            setError(err.message || String(err));
         }
     }
 
@@ -31,9 +62,9 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <label className="auth-label">
-                        Email
+                        Email or Username
                         <input
-                            type="email"
+                            type="text"
                             className="auth-input"
                             value={email}
                             onChange={e => setEmail(e.target.value)}

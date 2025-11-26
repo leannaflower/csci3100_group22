@@ -3,13 +3,21 @@
 import React, { useState, useEffect } from "react";
 import KanbanColumn from "../components/KanbanColumn";
 import "../components/Kanban.css";
+import { useAuth } from "../context/AuthContext";
 
 export default function BoardsPage() {
+    const { user } = useAuth();
+
     // "tasks" is the full list of all tasks on the board
     const [tasks, setTasks] = useState([]);
 
     // The three columns that will appear on the board
     const columns = ["To Do", "Doing", "Done"];
+
+    const displayName =
+        user?.displayName ||
+        user?.email ||
+        "Guest";
 
     // On first load, try to read any saved tasks from localStorage
     useEffect(() => {
@@ -92,7 +100,9 @@ export default function BoardsPage() {
 
     return (
         <div className="kanban-board">
-            <h1 className="kanban-title">My Kanban Board</h1>
+            <h1 className="kanban-title">
+                Welcome, {displayName}
+            </h1>
 
             <div className="kanban-columns">
                 {columns.map(col => (

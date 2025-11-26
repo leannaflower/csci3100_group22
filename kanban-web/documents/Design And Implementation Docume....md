@@ -1,10 +1,10 @@
 # **Software Design and Implementation Documentation**
 
 Project Name: Kanban-Based Web Application  
-Version: 1.0  
-Date: \[YYYY-MM-DD\]    
-Authors: Leanna Fowler, Yanice Kwon, Yiming Zhao  
-Status: Draft 2.0
+Document Version: 2.0  
+Date: YYYY-MM-DD  
+Group ID: 22
+Authors: Leanna Fowler, Yanice Kwon, Yiming Zhao   
 
 \---
 
@@ -13,36 +13,28 @@ Status: Draft 2.0
 
 ## **1.1 Purpose**  
 
-This document provides the technical design and implementation details of Group 22 Kanban-Based Project Management System. It describes the architecture, components, database schema, REST API, and development environment.
+This Design and Implementation Document (FastAPI + MySQL version) describes the final architecture and implementation of the Kanban-Based Project Management System where the backend is fully implemented using FastAPI and MySQL. It is written for developers and course markers to understand how the system works end-to-end.
 
-This serves as a developer-oriented reference for:
-
-* maintaining code consistency  
-* onboarding new contributors  
-* supporting future extension (e.g., analytics, reporting, license enforcement)
+It explains:
+* How the frontend, backend, and database interact
+* Key components and services
+* Data models, schemas, and API endpoints
+* Design decisions, trade-offs, and known limitations
 
 ## **1.2 Scope**  
+The implemented system includes:
 
-In Scope (implemented or in-progress)
+* React-based frontend with routing and authentication
+* FastAPI backend with RESTful endpoints
+* MySQL database for users, boards, columns, tasks, and licenses
+* JWT-based authentication
+* Licence key verification for protected features
+* Persistent Kanban board (CRUD + drag-and-drop)
 
-* React-based frontend (Login, Register, Boards, Tasks)  
-* Complete task CRUD operations  
-* Drag-and-drop task movement UI (frontend)  
-* License screen (UI implemented, backend TBD)  
-* User authentication (frontend \+ backend endpoints stubbed)  
-* Node.js \+ Express.js  backend with RESTful API  
-* MySQL database for tasks and users  
-* Dedicated API documentation and quick references  
-* Context-based frontend state management (AuthContext, etc.)
-
-Out of Scope (not implemented yet, future enhancement)
-
-* Admin dashboard  
-* Full reporting features (burnup, CFD, throughput)  
-* Webhooks  
-* Email notifications (SMTP)  
-* Attachments/exports  
-* Full WIP rule engine
+Out of scope / partially implemented:
+* Advanced analytics (full CFD/burnup/burndown)
+* Email notification integration
+* Rich role-based permission model (beyond basic roles)
 
 ## **1.3 Definitions, Acronyms, and Abbreviations**  
 
@@ -67,412 +59,572 @@ Out of Scope (not implemented yet, future enhancement)
 
 # **2\. Overall System Architecture**
 
+## **2.1 High-Level Architecture**
+The system follows a standard three-tier web architecture:
+```plantuml
+@startuml
+left to right direction
 
-## **2.1 Architecture Summary**
+actor "Web Browser" as Browser
 
-\[ React Frontend \] \<–––HTTP/JSON–––\> \[ Express Backend \] \<––SQL––\> \[ MySQL DB \]
+component "React Frontend" as Frontend
+component "FastAPI Backend" as Backend
+database "MySQL DB" as DB
+
+Browser --> Frontend : HTTP
+Frontend --> Backend : HTTP/JSON
+Backend --> DB : SQL
+@enduml
+```
 
 **Frontend**
-
-* React 18  
-* React Router  
-* AuthContext for global login state  
-* Custom UI components: Navbar, TaskList, TaskItem, TaskForm, BoardsPage
+* Built in React
+* Uses React Router for page navigation
+* Uses an `AuthContext` to hold the logged-in user and JWT
+* Communicates with backend through `fetch` (wrapped by `authClient` and `apiClient`)
 
 **Backend**
+* FastAPI application exposing `/api/v1/...` endpoints
+* Routers: `auth`, `users`, `boards`, `tasks`, `license`
+* Uses SQLAlchemy ORM for MySQL persistence
+* Uses Pydantic models for request/response validation
+* Issues and verifies JWT tokens for authentication
 
-* Express.js  
-* Modular route handlers under /api/v1  
-* MySQL using mysql2/promise  
-* MVC-inspired structure (controllers, services, routes)
-
-**Database**
-
-* MySQL  
-* Tables: tasks, users (in progress), sessions/auth (TBD), future boards and projects
+**Database (MySQL)**
+* Persistent storage for:
+  * Users
+  * Projects/Boards
+  * Columns
+  * Tasks
+  * Licence keys
+  * (Optional) Audit logs
 
 ## 
 
 ## **2.2 Technology Stack Table**
 
-| Layer | Technology | Description |
+| Layer | Technology | Purpose |
 | ----- | ----- | ----- |
-| Frontend | React 18 \+ JSX | Component-based UI |
-| Frontend Styling | Plain CSS | TaskForm.css, TaskItem.css, TaskList.css |
-| Backend | Node.js \+ Express.js | REST API server |
+| Frontend | React 18, JSX | Component-based UI |
+| Routing | React Router | Client-side page navigation |
+| State | React Context API | Auth/user state |
+| Styling | CSS (Kanban.css + auth) | Layout and visual styling |
+| Backend | FastAPI | RESTful API server |
+| Auth | JWT | User authentication and authorization |
 | Database | MySQL 8 | Persistent storage |
-| API Docs | Markdown | `BACKEND_API_DOCUMENTATION.md`, `BACKEND_QUICK_REFERENCE.md` |
-| Auth | JWT (planned) | Login/logout flow |
-| Hosting | TBD | (Railway, Vercel, Render optional) |
+
 
 ### **2.3 Key Design Principles**
+* **Separation of Concerns**
+UI, API, and persistence are clearly separated. React is responsible for rendering and user interaction; FastAPI focuses on business logic and validation; MySQL handles persistence.
 
-| Principle | How It Is Applied |
-| ----- | ----- |
-| **Separation of Concerns** | Routes → Controllers → Services → DB Layer |
-| **API-first development** | Backend API doc written before integration |
-| **Stateless backend** | Requests contain all required auth data (JWT planned) |
-| **Error standardization** | All responses follow `{success, data, message/error}` |
-| **Open-ended extensibility** | Boards, Projects, WIP logic can be added without breaking tasks |
+* **API-First Design**
+API contracts were defined before integration, based on the requirements and UML use cases.
 
-# **3\. Detailed Component Design**
+* **Stateless Backend**
+Backend does not store session state in memory; instead, each request carries a JWT token.
 
+* **Extensibility**
+Entities such as Project, Board, and Task are designed so that more features (WIP limits, reports) can be added without breaking existing APIs.
 
-## **3.1 Module/Component Overview**  
-
-This system follows a layered architecture with clear separation between frontend, backend services, and infrastructure. Each module below is defined by responsibility, public interface, and dependencies.
-
-### **3.1.1 Frontend**
-
-Navbar
-
-* Responsibility: Navigation \+ login/logout visibility  
-* Inputs: AuthContext  
-* Outputs: Route changes
-
-LoginPage / RegisterPage
-
-* Handles user authentication  
-* Sends POST requests to /auth/login and /auth/register
-
-BoardsPage
-
-* Displays user’s boards (currently static / in-progress)
-
-TaskList
-
-* Fetches tasks from backend via apiClient.js  
-* Renders list of TaskItem components
+# **3\. UML Diagrams**
 
 
-TaskItem
+## **3.1 Component Diagram (Logical)**  
 
-* Displays individual task  
-* Supports: toggle completion, delete, edit
+``` plantuml
+@startuml
+actor "System Administrator" as Admin
+actor "Project Administrator" as PM
+actor "Project Member" as Member
+actor "Guest" as Guest
 
-TaskForm
+rectangle "Client" as Client {
+[Web Frontend] <<component>>
+}
 
-* Creates new tasks via POST /api/v1/tasks
+package "Backend Services (FastAPI)" as Backend {
+[Auth Router]
+[User Router]
+[Project Router]
+[Board Router]
+[Task Router]
+[License Router]
+}
 
-### **3.1.2 Backend**
+database "MySQL" as DB
 
-Auth Service
+Admin --> Client
+PM --> Client
+Member --> Client
+Guest --> Client
 
-* Responsibility: login, register, validate password  
-* Endpoints: /auth/register, /auth/login  
-* Dependencies: MySQL users table
+Client --> [Web Frontend]
+[Web Frontend] --> [Auth Router]
+[Web Frontend] --> [Project Router]
+[Web Frontend] --> [Board Router]
+[Web Frontend] --> [Task Router]
+[Web Frontend] --> [License Router]
 
-Task Service
+[Auth Router] --> DB
+[User Router] --> DB
+[Project Router] --> DB
+[Board Router] --> DB
+[Task Router] --> DB
+[License Router] --> DB
+@enduml
+```
 
-* Responsibility: CRUD operations for tasks  
-* Endpoints:  
-  `GET /tasks`    
-  `POST /tasks`    
-  `GET /tasks/:id`    
-  `PATCH /tasks/:id`    
-  `PATCH /tasks/:id/toggle`    
-  `DELETE /tasks/:id`    
-  * Dependencies: MySQL tasks table
+### **3.2 Frontend Component Hierarchy**
 
-### **3.1.3 Infrastructure components**
+```
+App
+├── Navbar
+├── AuthContextProvider
+└── Routes
+├── LoginPage
+├── RegisterPage
+├── BoardsPage
+│ ├── KanbanColumn × N
+│ │ └── KanbanCard × M
+│ └── (optional) BoardControls
+└── (future) LicensePage, ReportsPage
+```
 
-| Component | Purpose |
-| ----- | ----- |
-| MySQL DB | Persists users and tasks |
-| Express Server | Core backend |
-| CORS Middleware | Allows frontend to call backend |
-| dotenv | Secure environment variables |
-| ESLint | Linting |
+### **3.3 Sequence Diagram — Login + Licence Check**
+``` plantuml
+@startuml
+actor User as U
+participant "React FE" as FE
+participant "Auth Router" as AuthAPI
+participant "License Router" as LicAPI
+database DB
 
-## **3.2 Data Design**  
 
-#### **3.2.1 Tables**
+U -> FE: Submit email/password
+FE -> AuthAPI: POST /api/v1/auth/login
+AuthAPI -> DB: SELECT user WHERE username = ?
+DB --> AuthAPI: user row
+AuthAPI -> AuthAPI: verify password hash
+AuthAPI -> AuthAPI: generate JWT access token
+AuthAPI --> FE: 200 {access_token, user}
 
-**user**
 
-| Field | Type | Notes |
-| ----- | ----- | ----- |
-| id | INT PK | Auto-increment |
-| email | VARCHAR(255) | Unique |
-| password\_hash | VARCHAR(255) | Bcrypt |
-| display\_name | VARCHAR(255) | Optional |
-| created\_at | TIMESTAMP | default |
+FE -> LicAPI: GET /api/v1/license/status (Authorization: Bearer)
+LicAPI -> DB: SELECT license WHERE user_id = ?
+DB --> LicAPI: license info
+LicAPI --> FE: {status: Valid|Expired, features: [...]}
+FE -> U: Redirect to BoardsPage or show error
+@enduml
+```
+## **3.4 Sequence Diagram — Drag Task to New Column**  
+``` plantuml
+@startuml
+actor Member as M
+participant "React FE" as FE
+participant "Task Router" as TaskAPI
+database DB
 
-**tasks**
 
-| Field | Type | Notes |
-| ----- | ----- | ----- |
-| id | INT PK | Auto-increment |
-| title | VARCHAR(255) | Required |
-| description | TEXT | Optional |
-| completed | BOOLEAN | Default false |
-| created\_at | TIMESTAMP |  |
-| updated\_at | TIMESTAMP |  |
+M -> FE: Drag Task#123 from "To Do" to "Doing"
+FE -> FE: Update local UI optimistically
+FE -> TaskAPI: PATCH /api/v1/tasks/123/move {toColumnId}
+TaskAPI -> DB: SELECT column and WIP for target
+DB --> TaskAPI: current WIP count
+TaskAPI -> TaskAPI: validate WIP rules
+alt WIP exceeded
+TaskAPI --> FE: 409 {error: "WIP_LIMIT_EXCEEDED"}
+FE -> FE: revert card to original column
+else ok
+TaskAPI -> DB: UPDATE tasks SET column_id=?, updated_at=NOW()
+DB --> TaskAPI: success
+TaskAPI --> FE: 200 {task: updatedTask}
+end
+@enduml
 
-## **3.3 API Design**  
+``` 
 
-All APIs are exposed under a versioned prefix, for example /api/v1. JSON is used for requests and responses. Authentication is required for all non public endpoints via token or secure session cookie.
+# **4\. Detailed Component Design**
 
-3.3.1 Authentication endpoints
+## **4.1 Frontend (React)**  
+### 4.1.1 AuthContext
+* Stores current user and JWT token
+* Provides `login`, `logout`, and `handleAuthSuccess` functions
+* Reads token from `localStorage` on app load to keep users logged in
 
+### 4.1.2 authClient.js
+* Wrapper around `fetch` for auth-related endpoints:
+  * `loginUser(credentials)` calls `POST /api/v1/auth/login`
+  * `registerUser(data)` calls `POST /api/v1/auth/register`
+* Throws high-level JS errors with friendly messages
+
+### 4.1.3 apiClient.js (General API)
+* Attaches JWT token from `localStorage` to `Authorization` header
+* Exposes helpers:
+  * `getBoards()` → `GET /api/v1/boards`
+  * `getBoardTasks(boardId)` → `GET /api/v1/boards/{id}/tasks`
+  * `createTask(boardId, payload)` → `POST /api/v1/boards/{id}/tasks`
+  * `updateTask(taskId, payload)` → `PATCH /api/v1/tasks/{id}`
+  * `moveTask(taskId, toColumnId)` → `PATCH /api/v1/tasks/{id}/move`
+
+### 4.1.4 LoginPage
+* Controlled form for `email` and `password`
+  * On submit, calls `loginUser`
+* On success:
+  * Stores `access_token` in localStorage
+  * Calls `handleAuthSuccess` in `AuthContext`
+  * Navigates to `/boards`
+
+### 4.1.5 RegisterPage
+* Similar to LoginPage, but calls `registerUser`
+* Optionally sends `displayName`
+* On success, behaves like login
+
+### 4.1.6 BoardsPage
+* Fetches boards and tasks from backend on mount:
+  * `GET /api/v1/boards`
+  * `GET /api/v1/boards/{boardId}/tasks`
+* Maintains `tasks` state as array of task objects
+* Passes column-specific filtered tasks to `KanbanColumn`
+* On task update or move, calls backend then updates local state
+
+### 4.1.7 KanbanColumn
+
+* Receives:
+  * `columnName`, `columnId`, `tasks`
+  * callbacks: `addTask`, `moveTask`, `updateTask`, `deleteTask`
+* Implements drag-and-drop event handlers connected to backend
+
+### 4.1.8 KanbanCard
+* Draggable task card
+* Represents one `Task` row from DB
+* Supports:
+  * Toggle completion
+  * Inline editing of title/description
+  * Delete
+  * Drag between columns
+
+## **4.2 Backend (FastAPI)**  
+
+### 4.2.1 Project Layout (Example)
+```
+backend/
+├── app/
+│ ├── main.py
+│ ├── database.py
+│ ├── models.py
+│ ├── schemas.py
+│ ├── auth/
+│ │ ├── router.py
+│ │ └── utils.py
+│ ├── routers/
+│ │ ├── users.py
+│ │ ├── projects.py
+│ │ ├── boards.py
+│ │ ├── tasks.py
+│ │ └── license.py
+│ └── core/
+│ ├── config.py
+│ └── security.py
+└── alembic/
+```
+### 4.2.2 main.py
+* Creates FastAPI app
+* Includes routers with prefix /api/v1
+* Configures CORS (allows frontend origin)
+* Dependency injection for DB sessions
+
+### 4.2.3 Models (SQLAlchemy)
+Simplified example:
+``` py
+class User(Base):
+__tablename__ = "users"
+
+id = Column(Integer, primary_key=True, index=True)
+username = Column(String(255), unique=True, index=True, nullable=False)
+password_hash = Column(String(255), nullable=False)
+display_name = Column(String(255))
+created_at = Column(DateTime, server_default=func.now())
+
+class Project(Base):
+__tablename__ = "projects"
+id = Column(Integer, primary_key=True)
+name = Column(String(255), nullable=False)
+owner_id = Column(Integer, ForeignKey("users.id"))
+
+class Board(Base):
+__tablename__ = "boards"
+id = Column(Integer, primary_key=True)
+name = Column(String(255), nullable=False)
+project_id = Column(Integer, ForeignKey("projects.id"))
+
+class Column(Base):
+__tablename__ = "columns"
+id = Column(Integer, primary_key=True)
+name = Column(String(255), nullable=False)
+wip_limit = Column(Integer, nullable=True)
+board_id = Column(Integer, ForeignKey("boards.id"))
+
+class Task(Base):
+__tablename__ = "tasks"
+id = Column(Integer, primary_key=True)
+title = Column(String(255), nullable=False)
+description = Column(Text)
+column_id = Column(Integer, ForeignKey("columns.id"))
+assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+completed = Column(Boolean, default=False)
+created_at = Column(DateTime, server_default=func.now())
+updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+class License(Base):
+__tablename__ = "licenses"
+id = Column(Integer, primary_key=True)
+key = Column(String(64), unique=True, nullable=False)
+owner_id = Column(Integer, ForeignKey("users.id"))
+valid_until = Column(Date)
+features = Column(String(255)) # comma-separated feature codes
+```
+
+### Schemas (Pydantic)
+Example for tasks:
+``` py
+class TaskBase(BaseModel):
+title: str
+description: str | None = None
+
+class TaskCreate(TaskBase):
+column_id: int
+
+class TaskUpdate(BaseModel):
+title: str | None = None
+description: str | None = None
+completed: bool | None = None
+
+class TaskOut(TaskBase):
+id: int
+column_id: int
+completed: bool
+
+class Config:
+orm_mode = True
+```
+
+### 4.2.5 Auth Router
+Key responsibilities:
+* Register user: hash password, insert into DB
+* Login: verify password, issue JWT
+* Dependency to get `current_user` from token
+
+Endpoints (under `/api/v1/auth`):
+* `POST /register`
+* `POST /login`
+
+### 4.2.6 Task Router
+**Endpoints:**
+* `GET /boards/{board_id}/tasks` — Lists tasks for board
+* `POST /boards/{board_id}/tasks` — Creates task
+* `PATCH /tasks/{task_id} `— Updates title/description/completed
+* `PATCH /tasks/{task_id}/move` — Moves task between columns with WIP check
+* `DELETE /tasks/{task_id}` — Deletes task
+
+**Each endpoint:**
+* Requires current_user dependency (JWT)
+* Validates board membership and license if feature-protected
+
+### 4.2.7 License Router
+**Endpoints:**
+* POST /license/validate — Checks if a given key is valid
+* GET /license/status — Returns license info for current user
+
+**Logic:**
+* Parse key in format AAAA-BBBB-CCCC-DDDD
+* Look up in licenses table
+* Check valid_until and enabled features
+
+
+# **5\. Data Design**
+## 5.1 Database Schema (MySQL)
+Example DDL:
+``` sql
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  display_name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE projects (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  owner_id INT,
+  FOREIGN KEY (owner_id) REFERENCES users(id)
+);
+
+CREATE TABLE boards (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  project_id INT,
+  FOREIGN KEY (project_id) REFERENCES projects(id)
+);
+
+CREATE TABLE columns (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  wip_limit INT,
+  board_id INT,
+  FOREIGN KEY (board_id) REFERENCES boards(id)
+);
+
+CREATE TABLE tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  column_id INT,
+  assignee_id INT,
+  completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (column_id) REFERENCES columns(id),
+  FOREIGN KEY (assignee_id) REFERENCES users(id)
+);
+
+CREATE TABLE licenses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  `key` VARCHAR(64) UNIQUE NOT NULL,
+  owner_id INT,
+  valid_until DATE,
+  features VARCHAR(255),
+  FOREIGN KEY (owner_id) REFERENCES users(id)
+);
+```
+## 5.2 Entity Relationships
+* One `User` can own many `Projects`
+* One `Project` has many `Boards`
+* One `Board` has many `Columns`
+* One `Column` has many `Tasks`
+* One `User` may own one or more `Licenses`
+
+# **6\. API Design**  
+## 6.1 Authentication
 **POST `/api/v1/auth/register`**
-
-* Request
-
-`{`  
-  `"title": "New task",`  
-  `"description": "Optional"`  
-`}`
-
-* Response
-
-`{`  
-  `"success": true,`  
-  `"message": "Task created successfully",`  
-  `"data": {`  
-    `"id": 1,`  
-    `"title": "New task",`  
-    `"description": "Optional",`  
-    `"completed": false`  
-  `}`  
-`}`
-
+* Register:
+``` json
+{
+  "username": "testuser",
+  "password": "secret",
+  "display_name": "Test User"
+}
+```
+* Response:
+``` json
+{
+  "access_token": "...",
+  "token_type": "bearer",
+  "user": {"id": 1, "username": "testuser", "display_name": "Test User"}
+}
+```
 **POST `/api/v1/auth/login`**
+* Register:
+``` json
+{
+"username": "testuser",
+"password": "secret"
+}
+```
+* Response: same shape as Register
+
+## 6.2 Boards & Columns
+**GET `/api/v1/boards`**
+Returns all boards visible to the current user.
+
+**GET `/api/v1/boards/{board_id}/columns`**
+Returns columns for a board, including WIP limits.
+
+## 6.3 Tasks
+**GET `/api/v1/boards/{board_id}/tasks`**
+Returns tasks grouped by columns.
+
+**POST `/api/v1/boards/{board_id}/tasks`**
+Creates a new task in a column.
+
+**PATCH `/api/v1/tasks/{task_id}`**
+Updates basic fields like title, description, completed.
+
+**PATCH `/api/v1/tasks/{task_id}/move`**
+* Request:
+``` json
+{
+  "toColumnId": 3
+}
+```
+* Response (Success):
+``` json
+{
+  "task": {"id": 123, "column_id": 3, "completed": false}
+}
+```
+* Response (WIP exceeded):
+``` json
+{
+  "error": "WIP_LIMIT_EXCEEDED",
+  "message": "Target column limit is 5, current is 5"
+}
+```
+
+## 6.4 Licence
+**POST `/api/v1/license/validate`**
+Validates a license key.
+
+**GET `/api/v1/license/status`**
+Checks current user’s licence status and enabled features.
+
+# **7\. Implementation Details**
+## 7.1 Security & JWT
+* Passwords hashed using `bcrypt`
+* JWT includes user id and expiry
+* Protected endpoints require `Authorization: Bearer <token>`
+* FastAPI dependency verifies token and returns `current_user`
+
+## 7.2 Error Handling
+* Uses HTTP status codes: 200, 201, 400, 401, 403, 404, 409, 500
+* Errors returned in JSON shape: `{ "error": "ERROR_CODE", "message": "..." }`
+
+## 7.3 Frontend–Backend Integration
+* `authClient.js` and `apiClient.js` centralize API calls
+* `AuthContext` reads and writes token from/to `localStorage`
+* `BoardsPage` uses `useEffect` to fetch tasks and then updates local state
+
+## 7.4 Drag-and-Drop with Backend
+* Frontend updates UI optimistically when dragging
+* Sends `PATCH /tasks/{id}/move` to backend
+* On error (e.g., WIP exceeded), reverts UI
+
+# **8\. Development Methodology**
+## 8.1 Process
+* Iterative, agile-inspired development
+* Milestones:
+  * M1: Requirements & UML
+  * M2: Frontend skeleton
+  * M3: Auth backend
+  * M4: Task/board backend integration
+  * M5: Licence and polishing
+
+## 8.2 Version Control
+* GitHub repository
+* Feature branches for auth, boards, tasks, licence
+* Pull requests and reviews where possible
+
+# 9\. Known Issues & Limitations
+* Licence logic is basic; does not yet enforce per-feature granularity everywhere
+* Reporting endpoints only partially implemented
+* Audit logging minimal
+* No full test coverage for every endpoint
+
+# 10\. Repository Links
+* Frontend GitHub Repository:
+*(Insert URL here)*
+* Backend (FastAPI + MySQL) Repository:
+*(Insert URL here)*
 
-* Request: email and password  
-* Response: tokens and profile
-
-**POST `/api/v1/auth/logout`**
-
-* Invalidates current session or token.
-
-### **3.3.2 License endpoints**
-
-**POST `/api/v1/licenses/validate`**
-
-* Request
-
-`{`  
-  `"licenseKey": "AAAA-BBBB-CCCC-DDDD"`  
-`}`
-
-* Response
-
-`{`  
-  `"status": "valid",`  
-  `"validUntil": "2026-01-01",`  
-  `"features": ["REPORTING", "EXPORT"]`  
-`}`
-
-**GET `/api/v1/licenses/status`**
-
-* Returns license status for current user or project.
-
-### **3.3.3 Project, board, and member endpoints**
-
-**GET `/api/v1/projects`**
-
-* Returns projects visible to current user.
-
-**POST `/api/v1/projects`**
-
-* Create project with name and optional description.
-
-**GET `/api/v1/projects/{projectId}`**
-
-* Returns project details, members, boards.
-
-**POST `/api/v1/projects/{projectId}/members`**
-
-* Invite or update member with a role.
-
-**GET `/api/v1/projects/{projectId}/boards`**
-
-* List boards for a project.
-
-**POST `/api/v1/projects/{projectId}/boards`**
-
-* Create a kanban board.
-
-**POST `/api/v1/boards/{boardId}/columns`**
-
-* Create column with name, position, and WIP limit.
-
-**PATCH `/api/v1/columns/{columnId}`**
-
-* Update column name, position, or WIP limit.
-
-### **3.3.4 Task and comment endpoints**
-
-**GET `/api/v1/boards/{boardId}/tasks`**
-
-* List tasks by column for board display.
-
-**POST `/api/v1/boards/{boardId}/tasks`**
-
-* Create new task.
-
-**PATCH `/api/v1/tasks/{taskId}`**
-
-* Update task fields such as title, description, assignee, due date.
-
-**PATCH `/api/v1/tasks/{taskId}/move`**
-
-* Request
-
-`{`  
-  `"toColumnId": 5`  
-`}`
-
-* Response on success
-
-`{`  
-  `"task": {`  
-    `"id": 123,`  
-    `"columnId": 5,`  
-    `"status": "Doing"`  
-  `}`  
-`}`
-
-* Response on WIP violation
-
-`{`  
-  `"error": "WIP_LIMIT_EXCEEDED",`  
-  `"message": "Target column limit is 5, current is 5"`  
-`}`
-
-**POST `/api/v1/tasks/{taskId}/comments`**
-
-* Add a comment to a task.
-
-### **3.3.5 Reporting endpoints**
-
-**GET `/api/v1/projects/{projectId}/reports/burndown`**
-
-* Query parameters: from, to.  
-* Response: array of date and remaining work points.
-
-**GET `/api/v1/projects/{projectId}/reports/cfd`**
-
-* Response: cumulative flow data by column and date.
-
-**GET `/api/v1/projects/{projectId}/reports/throughput`**
-
-* Response: completed tasks per interval.
-
-### **3.3.6 Audit, export, and admin endpoints**
-
-**GET `/api/v1/audit`**
-
-* Admin only. Supports filters by actor, project, action, date.
-
-**GET `/api/v1/export/tasks?projectId={projectId}`**
-
-* Returns CSV or JSON snapshot of tasks.
-
-### **3.3.7 Error handling and conventions**
-
-* Status 200 or 201 for success.  
-* Status 400 for invalid input.  
-* Status 401 for missing or invalid authentication.  
-* Status 403 for insufficient role or missing license entitlement.  
-* Status 404 for non existing resource.  
-* Status 409 for WIP or business rule conflicts.  
-* Status 500 for unexpected server errors.
-
-Standard error body  
-`{`  
-  `"error": "CONFLICT",`  
-  `"message": "WIP limit exceeded for column Doing",`  
-  `"details": {`  
-    `"limit": 5,`  
-    `"current": 5`  
-  `}`  
-`}`
-
-# **4\. Implementation Plan**
-
-
-## **4.1 Development Environment Setup**  
-
-**Prerequisites**
-
-* Node.js 18+  
-* MySQL 8  
-* npm 9+
-
-**Steps**  
-`git clone https://github.com/group22/kanban-web`  
-`cd kanban-web/backend`  
-`npm install`  
-`cp .env.example .env`  
-`npm run dev`
-
-**Frontend**:  
-`cd ../kanban-web`  
-`npm install`  
-`npm start`
-
-## **4.2 Coding Standards**  
-
-* `Prettier` formatting  
-* Naming conventions:  
-  * Components start with capital letter  
-  * API files: apiClient.js, authClient.js
-
-## **4.3 Testing Strategy**  
-
-**Planned Tests**
-
-| Type | Tool | Examples |
-| ----- | ----- | ----- |
-| Unit | Jest | Test task service functions |
-| Integration | Postman / Supertest | API endpoints |
-| Frontend tests | React Testing Library | Task rendering |
-| Manual | Browser testing | Login → Boards → Create task |
-
-* Tests run automatically on PR via GitHub Actions.  
-* All tests must pass before merging to `main`.
-
-## **4.4 Build & Deployment**  
-
-1. On Push to `feature/*`:  
-   * Install deps → lint → run unit tests  
-2. On PR to `main`:  
-   * Run integration \+ E2E tests against emulators  
-   * Generate preview URL (via Vercel or Firebase Hosting preview channels)  
-3. On Merge to `main`:  
-   * Build optimized production bundle  
-   * Deploy to Staging Firebase project  
-   * Manual QA sign-off required  
-4. Production Release:  
-   * Tagged release triggers deployment to Production Firebase project  
-   * Rollback: Revert tag \+ redeploy previous version
-
-Environments:
-
-* Dev: Local \+ emulator (developer machines)  
-* Staging: `https://kanban-app-staging.web.app`  
-* Production: `https://kanban-app-prod.web.app`
-
-\---
-
-# **5\. Risks and Mitigations**
-
-
-| Risk | Likelihood | Mitigation |
-| ----- | ----- | ----- |
-| Backend not finished on time | Medium | Prioritize essential endpoints only |
-| Drag and drop breaks with backend sync | Medium | Add fallback buttons for moving tasks |
-| License system incomplete | High | Deliver placeholder \+ clear documentation |
-| Database corruption | Low | Nightly SQL dumps |
-
-# **6\. Appendix**  
-
-**COME BACK TO THIS**
-
-* API documentation (included in files)  
-* Database schema SQL  
-* Component Diagram (from requirements doc)  
-* Sequence Diagrams
-
+# 11\. Conclusion
