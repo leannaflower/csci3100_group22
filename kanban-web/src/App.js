@@ -3,12 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-
-import Navbar from "./components/Navbar"; 
-
-function BoardsPage() {
-  return <div>Welcome to your Kanban boards!</div>;
-}
+import Navbar from "./components/Navbar";
+import BoardsPage from "./pages/BoardsPage";
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -31,6 +27,8 @@ export default function App() {
               </PrivateRoute>
             }
           />
+          <Route path="/dev-board" element={<BoardsPage />} />
+
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

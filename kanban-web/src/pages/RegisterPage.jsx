@@ -1,49 +1,53 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { registerUser } from "../api/authClient";
 import { useAuth } from "../context/AuthContext";
 
 export default function RegisterPage() {
-    const { handleAuthSuccess } = useAuth();
+    const { register } = useAuth();
     const navigate = useNavigate();
 
-    const [displayName, setDisplayName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
+        setLoading(true);
+
         try {
-            const data = await registerUser({ email, password, displayName });
-            handleAuthSuccess(data);
+            await register(tokens);
             navigate("/boards");
         } catch (err) {
-            setError(err.message);
+            console.error("Login failed:", err);
+            setError(err.message || String(err));
+        } finally {
+            setLoading(false);
         }
     }
+
 
     return (
         <div className="auth-page">
             <div className="auth-card">
-                <h1 className="auth-title">Create account</h1>
+                <h1 className="auth-title">Register</h1>
                 <p className="auth-subtitle">Join to start managing your projects.</p>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <label className="auth-label">
-                        Display name
+                        Display name (optional)
                         <input
                             type="text"
                             className="auth-input"
                             value={displayName}
                             onChange={e => setDisplayName(e.target.value)}
-                            required
+                            placeholder="How you want to be called"
                         />
                     </label>
 
                     <label className="auth-label">
-                        Email
+                        Email *
                         <input
                             type="email"
                             className="auth-input"
@@ -54,7 +58,7 @@ export default function RegisterPage() {
                     </label>
 
                     <label className="auth-label">
-                        Password
+                        Password *
                         <input
                             type="password"
                             className="auth-input"

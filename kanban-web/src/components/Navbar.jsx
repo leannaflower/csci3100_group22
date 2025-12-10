@@ -22,13 +22,19 @@ export default function Navbar() {
             <div className="navbar-right">
                 {user ? (
                     <>
-                        <span className="navbar-username">{user.displayName}</span>
+                        <span className="navbar-username">
+                            {user.username || user.email}
+                        </span>
                         <button onClick={handleLogout} className="navbar-button">
                             Logout
                         </button>
                     </>
                 ) : (
                     <>
+                        <Link to="/dev-board" className="navbar-link">
+                            Board (DEV MODE)
+                        </Link>
+
                         <Link to="/login" className="navbar-link">
                             Login
                         </Link>

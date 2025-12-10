@@ -1,39 +1,43 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { loginUser } from "../api/authClient";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
-    const { handleAuthSuccess } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
+        setLoading(true);
+
         try {
-            const data = await loginUser({ email, password });
-            handleAuthSuccess(data);
+            await login(email, password);
             navigate("/boards");
         } catch (err) {
-            setError(err.message);
+            console.error("Login failed:", err);
+            setError(err.message || String(err));
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
         <div className="auth-page">
             <div className="auth-card">
-                <h1 className="auth-title">Kanban Login</h1>
+                <h1 className="auth-title">Login</h1>
                 <p className="auth-subtitle">Sign in to access your boards.</p>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <label className="auth-label">
                         Email
                         <input
-                            type="email"
+                            type="text"
                             className="auth-input"
                             value={email}
                             onChange={e => setEmail(e.target.value)}
