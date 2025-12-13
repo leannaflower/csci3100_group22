@@ -79,6 +79,10 @@ body {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+body.dark .auth-input:focus {
+  color: black;
+}
+
 .auth-button {
   margin-top: 4px;
   padding: 9px 10px;
@@ -91,6 +95,10 @@ body {
   cursor: pointer;
   transition: background-color 0.15s ease, box-shadow 0.15s ease,
     transform 0.05s ease;
+}
+
+body.dark .auth-button {
+  background-color: #093085;
 }
 
 .auth-button:hover {
@@ -147,6 +155,10 @@ body {
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
 }
 
+body.dark .navbar {
+  background-color: #111a2e;
+}
+
 .navbar-left {
   display: flex;
   align-items: center;
@@ -193,7 +205,7 @@ body {
 }
 
 .navbar-button:hover {
-  background-color: #1e40af;
+  background-color: #2563eb;
 }
 
 .navbar-button:active {

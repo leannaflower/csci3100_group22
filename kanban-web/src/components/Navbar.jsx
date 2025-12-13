@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export default function Navbar() {
+export default function Navbar({ darkMode, setDarkMode }) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -15,11 +15,18 @@ export default function Navbar() {
         <nav className="navbar">
             <div className="navbar-left">
                 <Link to="/boards" className="navbar-logo">
-                    KanbanBoard (name is tbh)
+                    Sprintify
                 </Link>
             </div>
 
             <div className="navbar-right">
+                {/* <button
+                    type="button"
+                    className="darkmode-toggle"
+                    onClick={() => setDarkMode((v) => !v)}
+                >
+                    {darkMode ? "Light mode" : "Dark mode"}
+                </button> */}
                 {user ? (
                     <>
                         <span className="navbar-username">
@@ -31,10 +38,6 @@ export default function Navbar() {
                     </>
                 ) : (
                     <>
-                        <Link to="/dev-board" className="navbar-link">
-                            Board (DEV MODE)
-                        </Link>
-
                         <Link to="/login" className="navbar-link">
                             Login
                         </Link>

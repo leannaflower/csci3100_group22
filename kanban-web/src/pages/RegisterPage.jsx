@@ -6,43 +6,39 @@ export default function RegisterPage() {
     const { register } = useAuth();
     const navigate = useNavigate();
 
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
 
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
-        setLoading(true);
 
         try {
-            await register(tokens);
+            await register({ username, email, password });
             navigate("/boards");
         } catch (err) {
-            console.error("Login failed:", err);
+            console.error("Register failed:", err);
             setError(err.message || String(err));
-        } finally {
-            setLoading(false);
         }
     }
-
 
     return (
         <div className="auth-page">
             <div className="auth-card">
                 <h1 className="auth-title">Register</h1>
-                <p className="auth-subtitle">Join to start managing your projects.</p>
+                <p className="auth-subtitle">Create a new account</p>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <label className="auth-label">
-                        Display name (optional)
+                        Username *
                         <input
                             type="text"
                             className="auth-input"
-                            value={displayName}
-                            onChange={e => setDisplayName(e.target.value)}
-                            placeholder="How you want to be called"
+                            value={username}
+                            onChange={e => setUsername(e.target.value)}
+                            required
                         />
                     </label>
 

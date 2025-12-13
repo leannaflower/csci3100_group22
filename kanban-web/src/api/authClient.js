@@ -13,10 +13,7 @@ async function apiRequest(endpoint, method, data = null, token = null) {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const config = {
-        method,
-        headers,
-    };
+    const config = { method, headers };
 
     if (data) {
         config.body = JSON.stringify(data);
@@ -42,10 +39,16 @@ async function apiRequest(endpoint, method, data = null, token = null) {
                 errorPayload = { raw: responseText };
             }
 
-            const msgFromBackend =
-                errorPayload.detail ||
-                errorPayload.message ||
-                JSON.stringify(errorPayload);
+            // Make the error message actually readable
+            let msgFromBackend;
+            if (Array.isArray(errorPayload.detail)) {
+                msgFromBackend = JSON.stringify(errorPayload.detail);
+            } else {
+                msgFromBackend =
+                    errorPayload.detail ||
+                    errorPayload.message ||
+                    JSON.stringify(errorPayload);
+            }
 
             throw new Error(
                 `Request to ${endpoint} failed (${response.status}): ${msgFromBackend}`
@@ -68,9 +71,9 @@ async function apiRequest(endpoint, method, data = null, token = null) {
 }
 
 // Register user, returns { access_token, refresh_token, ... }
-export async function registerUser({ email, password }) {
+export async function registerUser({ username, email, password }) {
     const payload = {
-        username: email, // backend uses "username", but we let user type email
+        username,
         email,
         password,
     };
@@ -80,22 +83,17 @@ export async function registerUser({ email, password }) {
 // Login user, returns { access_token, refresh_token, ... }
 export async function loginUser({ email, password }) {
     const payload = {
-        username: email, // backend expects "username" field
+        username: email, // backend can take username OR email here
         password,
     };
     return apiRequest("/auth/login", "POST", payload);
 }
 
-// Refresh tokens using refresh_token
 export async function refreshToken(refreshToken) {
-    const payload = {
-        refresh_token: refreshToken,
-    };
-
+    const payload = { refresh_token: refreshToken };
     return apiRequest("/auth/refresh", "POST", payload);
 }
 
-// Fetch currently logged in user using access token
 export async function fetchCurrentUser(accessToken) {
     return apiRequest("/users/me", "GET", null, accessToken);
 }

@@ -182,3 +182,107 @@
     pointer-events: auto;
     transform: translateY(0);
 }
+
+/* Floating theme toggle button */
+.theme-fab {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.217);
+    background: rgba(15, 26, 46, 0.9);
+    color: #ffffff;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    z-index: 9999;
+    box-shadow: 0 0px 25px rgba(0, 0, 0, 0.338);
+}
+
+.theme-fab:hover {
+    transform: translateY(-1px);
+}
+
+body.dark .theme-fab {
+    background: rgba(255, 255, 255, 0.9);
+    color: #111827;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0px 25px rgba(206, 206, 206, 0.338);
+}
+
+/* Dark mode overrides only */
+body.dark {
+    background: #0b1220;
+    color: #e5e7eb;
+}
+
+body.dark .auth-page,
+body.dark .kanban-page,
+body.dark .kanban-board {
+    background: #0b1220;
+    color: #e5e7eb;
+}
+
+body.dark .auth-card,
+body.dark .kanban-column,
+body.dark .kanban-card {
+    background: #111a2e;
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* FIX: inputs were black text in dark mode */
+body.dark input,
+body.dark textarea,
+body.dark select {
+    background: #0b1220;
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark input::placeholder,
+body.dark textarea::placeholder {
+    color: rgba(229, 231, 235, 0.65);
+}
+
+/* FIX: card title selector was wrong */
+body.dark .kanban-card-title {
+    color: #e5e7eb;
+}
+
+/* Completed title should still be readable */
+body.dark .kanban-card-completed .kanban-card-title {
+    color: rgba(229, 231, 235, 0.6);
+}
+
+/* Buttons in cards (Edit / Save / Cancel) */
+body.dark .kanban-card-edit {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.dark .kanban-edit-input {
+    background: #0b1220;
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .kanban-edit-save {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .kanban-edit-cancel {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.dark a {
+    color: #93c5fd;
+}

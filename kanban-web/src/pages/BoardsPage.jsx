@@ -4,95 +4,186 @@ import KanbanColumn from "../components/KanbanColumn";
 import "../components/Kanban.css";
 import { useAuth } from "../context/AuthContext";
 
+const API_BASE_URL = "http://8.217.112.161:8000"; // same as authClient
+
 export default function BoardsPage() {
     const { user } = useAuth();
 
-    const [tasks, setTasks] = useState([]); // "tasks" is the full list of all tasks on the board
+    // All tasks for the current user
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-    const columns = ["To Do", "Doing", "Done"]; // The three columns that will appear on the board
+    const columns = ["To Do", "Doing", "Done"];
 
-    const displayName = // For displaying username/username on top of the page
-        user?.displayName ||
-        user?.email ||
-        "Guest";
+    const displayName =
+        user?.username || user?.email || "Guest";
 
-    // On first load, try to read any saved tasks from localStorage
-    useEffect(() => {
-        const saved = localStorage.getItem("kanbanTasks");
-        if (saved) {
-            setTasks(JSON.parse(saved));
+    // Helper: build headers with access token
+    function getAuthHeaders() {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+            throw new Error("No access token found. Please log in again.");
         }
+        return {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        };
+    }
+
+    // Load tasks from backend on mount
+    useEffect(() => {
+        async function fetchTasks() {
+            try {
+                setLoading(true);
+                setError("");
+
+                const res = await fetch(`${API_BASE_URL}/api/v1/tasks`, {
+                    method: "GET",
+                    headers: getAuthHeaders(),
+                });
+
+                const json = await res.json();
+
+                if (!res.ok || json.success === false) {
+                    throw new Error(json.message || "Failed to load tasks");
+                }
+
+                // quest.js expects { success: true, data: [...], count? }
+                setTasks(json.data || []);
+            } catch (err) {
+                console.error("Failed to fetch tasks:", err);
+                setError(err.message || "Failed to fetch tasks");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchTasks();
     }, []);
 
-    // Whenever "tasks" changes, save the latest version to localStorage
-    useEffect(() => {
-        localStorage.setItem("kanbanTasks", JSON.stringify(tasks));
-    }, [tasks]);
+    // Create a new task in a specific column
+    async function addTask(columnName, title) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/tasks`, {
+                method: "POST",
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    title,
+                    description: "",
+                    column: columnName,
+                }),
+            });
 
-    // Add a new task into a specific column
-    function addTask(columnName, title) {
-        const now = new Date().toISOString();
-        const newTask = {
-            id: Date.now().toString(),
-            title,
-            column: columnName,
-            completed: columnName === "Done",
-            createdAt: now,
-            updatedAt: now
-        };
-        setTasks(prev => [...prev, newTask]);
+            const json = await res.json();
+            if (!res.ok || json.success === false) {
+                throw new Error(json.message || "Failed to create task");
+            }
+
+            const created = json.data;
+            setTasks(prev => [...prev, created]);
+        } catch (err) {
+            console.error("Failed to add task:", err);
+            alert(err.message || "Failed to add task");
+        }
     }
 
+    // Move task to another column (drag and drop)
+    async function moveTask(taskId, newColumn) {
+        try {
+            const res = await fetch(
+                `${API_BASE_URL}/api/v1/tasks/${taskId}/move`,
+                {
+                    method: "PATCH",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ column: newColumn }),
+                }
+            );
 
-    // Move an existing task to a different column (drag-and-drop)
-    function moveTask(taskId, newColumn) {
-        setTasks(prev =>
-            prev.map(t =>
-                t.id === taskId
-                    ? {
-                        ...t,
-                        column: newColumn,
-                        completed: newColumn === "Done",    // completed is true only in Done column
-                        updatedAt: new Date().toISOString()
-                    }
-                    : t
-            )
-        );
+            const json = await res.json();
+            if (!res.ok || json.success === false) {
+                throw new Error(json.message || "Failed to move task");
+            }
+
+            const updated = json.data;
+            setTasks(prev =>
+                prev.map(t => (t.id === updated.id ? updated : t))
+            );
+        } catch (err) {
+            console.error("Failed to move task:", err);
+            alert(err.message || "Failed to move task");
+        }
     }
 
+    // Update task fields (e.g., title from inline edit)
+    async function updateTask(taskId, updates) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
+                method: "PATCH",
+                headers: getAuthHeaders(),
+                body: JSON.stringify(updates),
+            });
 
-    // Edit/update an existing task (for now, mainly the title and updateAt date)
-    function updateTask(taskId, updates) {
-        setTasks(prev =>
-            prev.map(t =>
-                t.id === taskId
-                    ? { ...t, ...updates, updatedAt: new Date().toISOString() }
-                    : t
-            )
-        );
+            const json = await res.json();
+            if (!res.ok || json.success === false) {
+                throw new Error(json.message || "Failed to update task");
+            }
+
+            const updated = json.data;
+            setTasks(prev =>
+                prev.map(t => (t.id === updated.id ? updated : t))
+            );
+        } catch (err) {
+            console.error("Failed to update task:", err);
+            alert(err.message || "Failed to update task");
+        }
     }
 
-    function toggleTaskComplete(taskId) {
-        setTasks(prev =>
-            prev.map(t => {
-                if (t.id !== taskId) return t;
+    // Toggle completed (checkbox)
+    async function toggleTaskComplete(taskId) {
+        try {
+            const res = await fetch(
+                `${API_BASE_URL}/api/v1/tasks/${taskId}/toggle`,
+                {
+                    method: "PATCH",
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({}), // backend ignores body
+                }
+            );
 
-                const inDone = t.column === "Done";
-                const newColumn = inDone ? "To Do" : "Done";    // if already in Done, send back to To Do
+            const json = await res.json();
+            if (!res.ok || json.success === false) {
+                throw new Error(json.message || "Failed to toggle task");
+            }
 
-                return {
-                    ...t,
-                    column: newColumn,
-                    completed: newColumn === "Done",
-                    updatedAt: new Date().toISOString()
-                };
-            })
-        );
+            const updated = json.data;
+            setTasks(prev =>
+                prev.map(t => (t.id === updated.id ? updated : t))
+            );
+        } catch (err) {
+            console.error("Failed to toggle task:", err);
+            alert(err.message || "Failed to toggle task");
+        }
     }
 
-    // Permanently remove a task from the board
-    function deleteTask(id) {
-        setTasks(prev => prev.filter(t => t.id !== id));
+    // Delete task
+    async function deleteTask(taskId) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/v1/tasks/${taskId}`, {
+                method: "DELETE",
+                headers: getAuthHeaders(),
+            });
+
+            const json = await res.json();
+            if (!res.ok || json.success === false) {
+                throw new Error(json.message || "Failed to delete task");
+            }
+
+            setTasks(prev => prev.filter(t => t.id !== taskId));
+        } catch (err) {
+            console.error("Failed to delete task:", err);
+            alert(err.message || "Failed to delete task");
+        }
     }
 
     return (
@@ -100,6 +191,9 @@ export default function BoardsPage() {
             <h1 className="kanban-title">
                 Welcome, {displayName}
             </h1>
+
+            {loading && <div>Loading tasks…</div>}
+            {error && <div style={{ color: "red" }}>{error}</div>}
 
             <div className="kanban-columns">
                 {columns.map(col => (
