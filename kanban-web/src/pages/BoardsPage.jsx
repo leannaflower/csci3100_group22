@@ -63,7 +63,7 @@ export default function BoardsPage() {
     }, []);
 
     // Create a new task in a specific column
-    async function addTask(columnName, title) {
+    async function addTask(columnName, title, description = "") {
         try {
             const res = await fetch(`${API_BASE_URL}/api/v1/tasks`, {
                 method: "POST",

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { loginUser, registerUser, fetchCurrentUser } from "../api/authClient";
+import { fetchLicenseStatus } from "../api/licenseClient";
 
 const AuthContext = createContext();
 
@@ -8,18 +9,40 @@ export function AuthProvider({ children }) {
     const [accessToken, setAccessToken] = useState(
         localStorage.getItem("access_token") || null
     );
+    const [licensed, setLicensed] = useState(false);
 
-    // Load user if token exists
+    async function refreshLicenseStatus() {
+        try {
+            const status = await fetchLicenseStatus();
+            setLicensed(Boolean(status.licensed));
+            return status;
+        } catch (e) {
+            setLicensed(false);
+            return { licensed: false };
+        }
+    }
+
+    // Load user if token exists (page refresh)
     useEffect(() => {
-        if (!accessToken) return;
+        if (!accessToken) {
+            setUser(null);
+            setLicensed(false);
+            return;
+        }
 
-        fetchCurrentUser(accessToken)
-            .then((data) => setUser(data))
-            .catch(() => {
+        (async () => {
+            try {
+                const me = await fetchCurrentUser(accessToken);
+                setUser(me);
+
+                await refreshLicenseStatus();
+            } catch (e) {
                 setUser(null);
+                setLicensed(false);
                 setAccessToken(null);
                 localStorage.removeItem("access_token");
-            });
+            }
+        })();
     }, [accessToken]);
 
     async function login(email, password) {
@@ -29,10 +52,12 @@ export function AuthProvider({ children }) {
             localStorage.setItem("access_token", res.access_token);
             setAccessToken(res.access_token);
 
-            // Fetch /users/me
             const me = await fetchCurrentUser(res.access_token);
             setUser(me);
+
+            await refreshLicenseStatus();
         }
+
         return res;
     }
 
@@ -45,6 +70,8 @@ export function AuthProvider({ children }) {
 
             const me = await fetchCurrentUser(res.access_token);
             setUser(me);
+
+            await refreshLicenseStatus();
         }
 
         return res;
@@ -52,12 +79,23 @@ export function AuthProvider({ children }) {
 
     function logout() {
         setUser(null);
+        setLicensed(false);
         setAccessToken(null);
         localStorage.removeItem("access_token");
     }
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                accessToken,
+                licensed,
+                refreshLicenseStatus,
+                login,
+                register,
+                logout,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );

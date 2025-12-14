@@ -20,13 +20,6 @@ export default function Navbar({ darkMode, setDarkMode }) {
             </div>
 
             <div className="navbar-right">
-                {/* <button
-                    type="button"
-                    className="darkmode-toggle"
-                    onClick={() => setDarkMode((v) => !v)}
-                >
-                    {darkMode ? "Light mode" : "Dark mode"}
-                </button> */}
                 {user ? (
                     <>
                         <span className="navbar-username">
