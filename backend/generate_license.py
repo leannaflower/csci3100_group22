@@ -1,4 +1,3 @@
-# seed_license_mysql.py
 import os
 import sys
 import hashlib
