@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from models import User, get_db
 
+
 JWT_SECRET_KEY = "change-this-secret-in-prod"
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -18,10 +19,9 @@ REFRESH_TOKEN_EXPIRE_DAYS = 14
 
 router = APIRouter(tags=["auth"])
 
-# ===== OAuth2（在 routers 层导出，供其他路由复用） =====
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-# ===== 密码哈希 =====
+# 密码哈希
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(p: str) -> str:
@@ -30,7 +30,7 @@ def hash_password(p: str) -> str:
 def verify_password(p: str, h: str) -> bool:
     return pwd_context.verify(p, h)
 
-# ===== JWT =====
+# JWT
 def create_token(subject: Union[str, int], expires_delta: timedelta, token_type: str) -> str:
     now = datetime.now(timezone.utc)
     expire = now + expires_delta
@@ -83,7 +83,7 @@ class TokenPair(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
-# ===== 依赖：当前用户（校验 access token） =====
+
 def get_current_user(
     db: Session = Depends(get_db),
     token: str = Depends(oauth2_scheme),
@@ -97,7 +97,7 @@ def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User disabled or not found")
     return user
 
-# ===== 路由 =====
+# 路由
 @router.post("/auth/register", response_model=TokenPair, summary="注册")
 def register(data: UserCreate, db: Session = Depends(get_db)):
     existed = db.execute(

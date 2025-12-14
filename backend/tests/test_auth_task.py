@@ -5,10 +5,8 @@ from typing import Dict, Any, Optional, Union
 import pytest
 import requests
 
-# 远程服务基址
 BASE_URL = "http://8.217.112.161:8000"
 
-# 统一使用一个 Session（可复用连接）
 session = requests.Session()
 
 
@@ -216,13 +214,11 @@ def test_tasks_crud_flow(user_tokens, task_payload_todo):
     got = j["data"]
     assert got["id"] == task_id
 
-    # 列表应 +1
     r = get_tasks(token)
     j = assert_success_response(r)
     after_count = j.get("count", len(j.get("data", [])))
     assert after_count == before_count + 1
 
-    # 更新任务：改标题、描述、列到 Doing（completed 仍 false）
     r = update_task(token, task_id, {"title": "Updated Title", "description": "Updated Desc", "column": "Doing"})
     j = assert_success_response(r)
     updated = j["data"]
@@ -248,7 +244,6 @@ def test_tasks_crud_flow(user_tokens, task_payload_todo):
     else:
         assert toggled["completed"] is True
 
-    # 删除任务
     r = delete_task(token, task_id)
     j = assert_success_response(r)
     assert "message" in j
@@ -281,19 +276,14 @@ def test_list_filters(user_tokens):
         j = assert_success_response(r, expected_status=201)
         ids.append(j["data"]["id"])
 
-    # 按列过滤
     r = get_tasks(token, params={"column": "Doing"})
     j = assert_success_response(r)
     for t in j["data"]:
         assert t["column"] == "Doing"
-
-    # 按完成状态过滤（字符串 "true"/"false" 取决于你的实现）
     r = get_tasks(token, params={"completed": "true"})
     j = assert_success_response(r)
     for t in j["data"]:
         assert t["completed"] is True
-
-    # 清理
     for tid in ids:
         delete_task(token, tid)
 
@@ -322,10 +312,8 @@ def test_validation_errors(user_tokens):
 
 
 def test_unauthorized_access():
-    # 未带 token 访问任务列表
     r = requests.get(f"{BASE_URL}/api/v1/tasks", timeout=10)
     assert r.status_code in (401, 403)
 
-    # 未带 token 创建任务
     r = requests.post(f"{BASE_URL}/api/v1/tasks", json={"title": "noauth"}, timeout=10)
     assert r.status_code in (401, 403)
