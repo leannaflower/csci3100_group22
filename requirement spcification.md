@@ -1,21 +1,23 @@
 # Requirement Specification
+## version 1.1
 ## Document Overview
 ### Purpose
-This document defines the requirements for the "Kanban-Based Web Project Management Application" to provide a unified  reference for product, development, and testing teams. It also serves as the primary reference for course assessment and  grading. The document specifies the system’s functional requirements (FR), non-functional requirements (NFR), business  boundaries, key scenarios, and quality standards to ensure alignment between implementation and documentation.  
+This document defines the requirements for "Sprintfy" to provide a unified  reference for product, development, and testing teams. The document specifies the system’s functional requirements (FR), non-functional requirements (NFR), business  boundaries, key scenarios, and quality standards to ensure alignment between implementation and documentation.  
 ### Scope
 #### System Boundaries
-The system provides browser-based project and kanban management, task collaboration, statistical reporting, user and license  management, as well as basic import/export functions and Webhook. It excludes real-time audio/video, complex  resource  scheduling, and in-depth financial management.  
+The system provides browser-based project and kanban management, to-do-list, license authentication.  
 #### Core Value
-Centered on a concise kanban interface, the system helps teams visualize work, limit work in progress, and then improve  delivery flow. It also enables teams to identify process bottlenecks and progress risks through reports such as Burndown/  Burnup Charts.  
+Centered on a concise kanban interface, the system helps teams visualize work, limit work in progress, and then improve  delivery flow.  
 ### Role  
-  
+Leanna:Frontend, test document,implementation document.
+Yanice:Frontend, implementation document.
+Yiming:Backend,database,requirment spcification.
 ### Reference Materials  
 GPT-5 (For document frame and translation from Chinese)  
-
 ---
 ## Background and Objectives  
 ### Problem Statement and Motivation
-Teams face challenges such as unclear task assignment, excessive WIP, and invisible progress during course projects. The  system addresses these issues through "work visualization + WIP limits + data-driven reports" to improve collaboration  efficiency, delivery predictability, and reduce communication costs.  
+Teams face challenges such as unclear task assignment, we build a to-do list for teams or people to help them plan and finish their tasks.
 ### Success Metrics
 1.**Onboarding**: New users take ≤10 minutes from registration to successfully creating their first kanban board and adding a task.  
 2.**Usability**: Success rate of critical path tasks ≥ 98%.  
@@ -24,19 +26,17 @@ Teams face challenges such as unclear task assignment, excessive WIP, and invisi
 ## Stakeholders and User Personas  
 ### Stakeholder List
 System Administrators: Maintain the system, manage licenses, view audit logs, and export data.
-Project Administrators: Create projects/kanban boards, configure workflows/WIP limits, invite members, and assign roles.
-Project Members: Create/update tasks, collaborate via comments, view reports, and perform daily operations.
-Guests (Read-Only): Access kanban boards and reports in a limited mode.
+Project Members: Create/update tasks, collaborate via comments.
+Guests : Need a license key to enter the website.
 ### User Personas
-User A is a project administrator.He plans weekly work, sets WIP limits, monitors CFD to identify bottlenecks, and invites team members to participate.  
-User B is a development member. He checks personal tasks daily, updates task status via drag-and-drop, mentions teammates in comments, and responds promptly to notifications.
+User A is a development member. He checks personal tasks daily, updates task status via drag-and-drop,.
 ### Scenarios
-Login → View personal kanban boards → Handle upcoming tasks → Update task status via drag-and-drop → Collaborate via comments → View reports  → Logout
+Login → View personal kanban boards → Handle upcoming tasks → Update task status via drag-and-drop  → View reports  → Logout
 ## Constraints and Assumptions  
 ### Technical Constraints
 - Browsers: Supports Chrome/Firefox versions from the past 5 years; mobile devices use responsive design.
 - Database: Uses a mysql database ; migration scripts are provided.
-- Frameworks: Frontend React/Vue, Backend Node.js/Express/Nest or Java/Spring, REST API v1.  
+- Frameworks: Frontend React, Backend Python, REST API v1.  
 ### Operating Environment and Hardware
 - Deployment: Supports Linux/Windows.
 - Minimum Hardware: 4-core x86_64 2GHz CPU, 8GB RAM; no dedicated GPU required.
@@ -45,18 +45,15 @@ Login → View personal kanban boards → Handle upcoming tasks → Update task 
 ## System Scope and Context  
 ### System Context Description  
 #### Human Actors
-System Administrators, Project Administrators, Members, Guests  
+System Administrators, Members, Guests  
 #### External Systems and Services
-- Email Service (SMTP): Sends invitations/notifications .
 - Object Storage/File System: Stores attachments and exported files.
-- This System:Frontend Web UI, Backend API Service, Database, (optional) Cache/Session Storage, Audit Logs
+- This System:Frontend Web UI, Backend API Service, Database, License Authentication, Audit Logs
 #### Boundary Description
-- The email gateway is provided by an external SMTP service; the system only sends email requests and is not responsible for delivery rates or bounce handling.
-- Advanced security features are out of scope.
+- stored and send password in hashing way, ensuring the safety of users' information.
 #### Context Diagram (Text Description)
-Users access the Web UI via browsers over HTTPS; the Web UI calls the backend REST API.
-The backend accesses the database to store user, project, task, license, and audit data; it uses object storage to save attachments and exported files.
-The backend optionally connects to SMTP for email delivery.
+Users access the Web UI via browsers over HTTP; the Web UI calls the backend REST API.
+The backend accesses the database to store user, project, task, license,; it uses object storage to save attachments and exported files.
 Administrators export audit logs and data backups via the admin interface.
 ---
 ## Functional Requirement  
@@ -65,20 +62,10 @@ Administrators export audit logs and data backups via the admin interface.
 2. License Management
 3. Database Storage of User Information
 ### Category 2: Progress Visualization
-1. Burnup/Burndown Charts
-2. Throughput Statistics
-3. Upcoming and Overdue Alerts
-### Category 3: Member Management
-1. Permission Settings 
-2. Access Control
-3. Project Member Management
-### Category 4: File Operations
-1. Recording Operation Logs
-2. Export of Operation Logs
-3. Export of Task Lists
-### Category 5: Features
-1. WIP Limits (Work in Progress Limits)
-2. Account Synchronization
+1. To-do-list
+2. system Admin can generate license.
+### Category 3: Features
+1. dark-mode
 ---
 ## Non-Functional Requirement  
 ### Category 1: Consistency
@@ -264,7 +251,6 @@ package "Backend Services" as Backend {
 
 database "MySQL Database" as DB
 cloud "Object Storage\n(Attachments / Exports)" as FS
-cloud "SMTP Server" as SMTP
 
 ' Actors to client
 Admin --> Client
@@ -319,7 +305,6 @@ Client --> [Web Frontend]
 [File / Export Service] --> DB
 
 [File / Export Service] --> FS
-[Notification Service] --> SMTP
 
 @enduml
 ```
